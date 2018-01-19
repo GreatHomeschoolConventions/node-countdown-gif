@@ -23,22 +23,22 @@ module.exports = {
         this.width = this.clamp(width, 150, 500);
         this.height = this.clamp(height, 150, 500);
         this.frames = this.clamp(frames, 1, 90);
-        
+
         this.bg = '#' + bg;
         this.textColor = '#' + color;
         this.name = name;
-        
+
         // loop optimisations
         this.halfWidth = Number(this.width / 2);
         this.halfHeight = Number(this.height / 2);
-        
+
         this.encoder = new GIFEncoder(this.width, this.height);
         this.canvas = new Canvas(this.width, this.height);
         this.ctx = this.canvas.getContext('2d');
-        
+
         // calculate the time difference (if any)
         let timeResult = this.time(time);
-        
+
         // start the gif encoder
         this.encode(timeResult, cb);
     },
@@ -62,10 +62,10 @@ module.exports = {
         // grab the current and target time
         let target = moment(timeString);
         let current = moment();
-        
+
         // difference between the 2 (in ms)
         let difference = target.diff(current);
-        
+
         // either the date has passed, or we have a difference
         if(difference <= 0){
             return 'Date has passed!';
@@ -88,9 +88,9 @@ module.exports = {
         if (!fs.existsSync(tmpDir)){
             fs.mkdirSync(tmpDir);
         }
-        
+
         let filePath = tmpDir + this.name + '.gif';
-        
+
         // pipe the image to the filesystem to be written
         let imageStream = enc
                 .createReadStream()
@@ -100,11 +100,11 @@ module.exports = {
             // only execute callback if it is a function
             typeof cb === 'function' && cb();
         });
-        
+
         // estimate the font size based on the provided width
         let fontSize = Math.floor(this.width / 12) + 'px';
         let fontFamily = 'Courier New'; // monospace works slightly better
-        
+
         // set the font style
         ctx.font = [fontSize, fontFamily].join(' ');
         ctx.textAlign = 'center';
@@ -124,43 +124,43 @@ module.exports = {
                 let hours = Math.floor(timeResult.asHours() - (days * 24));
                 let minutes = Math.floor(timeResult.asMinutes()) - (days * 24 * 60) - (hours * 60);
                 let seconds = Math.floor(timeResult.asSeconds()) - (days * 24 * 60 * 60) - (hours * 60 * 60) - (minutes * 60);
-                
+
                 // make sure we have at least 2 characters in the string
                 days = (days.toString().length == 1) ? '0' + days : days;
                 hours = (hours.toString().length == 1) ? '0' + hours : hours;
                 minutes = (minutes.toString().length == 1) ? '0' + minutes : minutes;
                 seconds = (seconds.toString().length == 1) ? '0' + seconds : seconds;
-                
+
                 // build the date string
                 let string = [days, 'd ', hours, 'h ', minutes, 'm ', seconds, 's'].join('');
-                
+
                 // paint BG
                 ctx.fillStyle = this.bg;
                 ctx.fillRect(0, 0, this.width, this.height);
-                
+
                 // paint text
                 ctx.fillStyle = this.textColor;
                 ctx.fillText(string, this.halfWidth, this.halfHeight);
-                
+
                 // add finalised frame to the gif
                 enc.addFrame(ctx);
-                
+
                 // remove a second for the next loop
                 timeResult.subtract(1, 'seconds');
             }
         } else {
             // Date has passed so only using a string
-            
+
             // BG
             ctx.fillStyle = this.bg;
             ctx.fillRect(0, 0, this.width, this.height);
-            
+
             // Text
             ctx.fillStyle = this.textColor;
             ctx.fillText(timeResult, this.halfWidth, this.halfHeight);
             enc.addFrame(ctx);
         }
-        
+
         // finish the gif
         enc.finish();
     }
